@@ -1,18 +1,93 @@
-# QUICKBIN
+# PixWars
 
-Your files and your notes, synced everywhere.
+A small side-view multiplayer game: two teams on separate platforms, each
+defending a bed. Break the other team's bed and they stop respawning.
 
-A personal cloud where text is a first-class citizen. Upload documents, images, 
-and archives — or skip the file and just start typing. Notes live in the same 
-folders and sync the same way. Both browser and mobile.
+## 1. The demo
 
-> **Status:** early development, not yet usable.
+I run `python main.py` and click **Host**. I type the name `neobytes`, and the lobby
+shows the code `K7P2QM` a nd `1/4 players`. On asecond laptop on the same wifi a
+friend clicks **Join**, types the code and the name `johnwick`, and appears in the
+lobby; two more join and the start button unlocks. We pick red or blue and spawn
+on two platforms about 25 tiles apart, each with a bed on it. I collect iron
+from the generator on my island, buy 16 blocks and a stone sword from the shop,
+and bridge toward the center island. `johnwick` reaches our base first and breaks our
+bed — the header changes to `RED BED DESTROYED`. I die to his sword and do not
+respawn, and when my last teammate dies the match ends with `BLUE WINS` and a
+scoreboard of beds broken, kills and deaths.
 
-## Stack
+## 2. The shape
 
-FastAPI - Supabase (Postgres, Auth, Storage) - React - React Native
+```
+in     button states from up to 4 players, sent to the host 60 times a second
+out    a finished match: a winning team and a scoreboard
+on screen   a fixed map of five platforms; each player moves, places and breaks
+            blocks, buys from a shop on their island, attacks, and defends one bed
+```
 
-## License
+The host holds the only real copy of the world. Clients send which keys are
+down, never where they are, and draw whatever the host sends back.
 
-[AGPL-3.0](LICENSE) — read it, self-host it, modify it. Run a modified version 
-as a service and you publish your source.
+## 3. The size
+
+### First useful version
+
+* 2v2 on one local network. The host runs the server inside their own process; others join with a 6-character code.
+* One hand-built map: two base platforms, two middle platforms, one center island.
+* Authoritative host: clients send button states, the host simulates and broadcasts the world 20 times a second.
+* Placing and breaking blocks, from a limited stack, so bridging between islands is how you cross.
+* One resource. An iron generator on each base, and one shop with four items: blocks, a stone sword, leather armor, a pickaxe.
+* Beds. While your bed stands you respawn after 5 seconds with an empty inventory; once it is broken, death is final. Last team alive wins.
+* Melee combat only.
+
+### Not this term
+
+* **4v4, and matches over the internet.** A join code that works between two
+  houses needs a relay server with a public address and NAT traversal. That is
+  infrastructure, not gameplay, and it is its own project.
+* **Client-side prediction and interpolation.** The first version accepts
+  visibly steppy movement at 20 ticks a second rather than hiding the tick rate.
+* Diamond and emerald tiers, generator upgrades, team upgrades.
+* Bows, projectiles and knockback. These break the guarantee that nothing moves
+  more than half a tile per tick, which is what keeps collision simple.
+* Reconnecting. A player who drops is gone for that match.
+* Sound, music, animated sprites, particles.
+* More than one map.
+* Stats that survive closing the game.
+
+## 4. How we would know it works
+
+* Given a client that sends a position rather than a button state, the host
+  ignores it and that player does not move. The host is the only authority on
+  where anyone is.
+* Given a team whose bed has been broken, a player of that team who dies does
+  not respawn, and the match ends the moment their last living player dies.
+* Given a client that disconnects mid-match, the host removes that player within
+  one tick and the remaining clients keep receiving updates without stalling.
+
+The simulation is a separate module that imports neither pygame nor sockets, so
+all three can be checked by stepping a world in a test, with no window open and
+no second machine.
+
+## 5. What could stop this
+
+* **Networking is the technique I have not used before.** Everything else here
+  is a variation on things I have written; the host/client split is not. This is
+  why the first version is LAN-only and why interpolation is deferred: I would
+  rather ship something correct and slightly jerky than debug smoothing on top of
+  a sync bug.
+* **Testing needs four clients and I am one person.** Because the simulation
+  runs headless, most of it can be tested without the network at all, and the
+  remainder by running several clients against a host on one machine.
+* Nothing external. No data, no API, no accounts, no personal data, nothing to
+  deploy. The demo is two or more laptops on the room's wifi, and it degrades to
+  several windows on one laptop if the wifi does not cooperate.
+* **The real risk is size.** A networked multiplayer game is more than eight
+  weeks of work if every part of it is required, so the plan is to build the
+  game locally first and treat the network layer as a port, not a foundation.
+  The checkpoint is week six: if the local 2v2 game is not finished and the
+  simulation is not cleanly separated by then, the network layer does not get
+  started, and the term's deliverable is the local game with bot opponents.
+* **It solves no one's problem but mine.** This is a game I would open next
+  semester rather than a tool someone is waiting for, which I take to be within
+  "choose something you want to use" but is worth naming rather than dressing up.
