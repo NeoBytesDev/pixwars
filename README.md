@@ -6,7 +6,7 @@ defending a bed. Break the other team's bed and they stop respawning.
 ## 1. The demo
 
 I run `python main.py` and click **Host**. I type the name `neobytes`, and the lobby
-shows the code `K7P2QM` a nd `1/4 players`. On asecond laptop on the same wifi a
+shows the code `K7P2QM` and `1/4 players`. On a second laptop on the same wifi a
 friend clicks **Join**, types the code and the name `johnwick`, and appears in the
 lobby; two more join and the start button unlocks. We pick red or blue and spawn
 on two platforms about 25 tiles apart, each with a bed on it. I collect iron
